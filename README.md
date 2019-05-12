@@ -5,9 +5,12 @@ A collection of JVMTI code examples covering the following -
 
 ## Methods
 
+* Get All StackTraces
+* Get System Properties
 
 
-## Events
+
+## Events (Still to be developed)
 
 * VMInit
 * VMDeath
