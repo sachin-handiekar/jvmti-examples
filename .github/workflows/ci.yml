@@ -1,0 +1,58 @@
+name: Build and Test - Learning JVMTI Code examples
+
+on:
+  push:
+    paths:
+      - '**.c'
+      - '**CMakeLists.txt'
+      - '.github/workflows/ci.yml'
+  pull_request:
+    paths:
+      - '**.c'
+      - '**CMakeLists.txt'
+      - '.github/workflows/ci.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        project:
+          - ch01_capability_checker
+          - ch03_event_registration
+          - ch04_thread_class_inspection
+          - ch05_profiler_agent
+          - ch06_gc_exception_agent
+          - ch07_jni_callback_agent
+          - ch08_thread_control_agent
+          - ch09_heap_stack_agent
+          - ch10_class_transform_agent
+          - ch11_memory_cleanup_agent
+          - ch12_prod_agent
+    defaults:
+      run:
+        working-directory: ${{ matrix.project }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: sudo apt-get update && sudo apt-get install -y cmake build-essential openjdk-17-jdk
+
+      - name: Configure CMake
+        run: cmake -S . -B build
+
+      - name: Build
+        run: cmake --build build
+
+      # Optional: Compile Java files if present
+      - name: Compile Java files (if any)
+        run: |
+          if compgen -G "*.java" > /dev/null; then
+            javac *.java
+          fi
+        shell: bash
+
+      # Optional: Run tests or sample commands here
+      # - name: Run tests
+      #   run: <insert test command here>
