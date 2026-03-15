@@ -129,3 +129,17 @@ compile_commands.json
 CTestTestfile.cmake
 
 # End of https://www.gitignore.io/api/c,c++,clion,cmake
+
+### Build directories ###
+build/
+**/build/
+
+### Agent log files ###
+*.log
+
+### Compiled Java class files ###
+*.class
+
+### OS files ###
+.DS_Store
+Thumbs.db

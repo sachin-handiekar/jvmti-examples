@@ -1,8 +1,6 @@
-cmake_minimum_required(VERSION 3.6)
-project(gc_exception_agent)
+cmake_minimum_required(VERSION 3.10)
+project(gc_exception_agent C)
 
-set(CMAKE_C_STANDARD 99)
+include(${CMAKE_CURRENT_LIST_DIR}/../cmake/JvmtiCommon.cmake)
 
-add_library(gc_exception_agent SHARED gc_exception_agent.c)
-
-target_include_directories(gc_exception_agent PRIVATE $ENV{JAVA_HOME}/include $ENV{JAVA_HOME}/include/win32)
+add_jvmti_agent(gc_exception_agent gc_exception_agent.c)

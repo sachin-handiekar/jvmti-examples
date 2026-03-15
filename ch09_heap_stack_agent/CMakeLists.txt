@@ -1,8 +1,6 @@
-cmake_minimum_required(VERSION 3.6)
-project(heap_stack_agent)
+cmake_minimum_required(VERSION 3.10)
+project(heap_stack_agent C)
 
-set(CMAKE_C_STANDARD 99)
+include(${CMAKE_CURRENT_LIST_DIR}/../cmake/JvmtiCommon.cmake)
 
-add_library(heap_stack_agent SHARED heap_stack_agent.c)
-
-target_include_directories(heap_stack_agent PRIVATE $ENV{JAVA_HOME}/include $ENV{JAVA_HOME}/include/win32)
+add_jvmti_agent(heap_stack_agent heap_stack_agent.c)

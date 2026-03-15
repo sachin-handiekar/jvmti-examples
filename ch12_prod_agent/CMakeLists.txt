@@ -1,8 +1,6 @@
-cmake_minimum_required(VERSION 3.6)
-project(prod_agent)
+cmake_minimum_required(VERSION 3.10)
+project(prod_agent C)
 
-set(CMAKE_C_STANDARD 99)
+include(${CMAKE_CURRENT_LIST_DIR}/../cmake/JvmtiCommon.cmake)
 
-add_library(prod_agent SHARED prod_agent.c)
-
-target_include_directories(prod_agent PRIVATE $ENV{JAVA_HOME}/include $ENV{JAVA_HOME}/include/win32)
+add_jvmti_agent(prod_agent prod_agent.c)

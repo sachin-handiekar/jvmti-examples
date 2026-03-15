@@ -1,8 +1,6 @@
-cmake_minimum_required(VERSION 3.6)
-project(profiler_agent)
+cmake_minimum_required(VERSION 3.10)
+project(profiler_agent C)
 
-set(CMAKE_C_STANDARD 99)
+include(${CMAKE_CURRENT_LIST_DIR}/../cmake/JvmtiCommon.cmake)
 
-add_library(profiler_agent SHARED profiler_agent.c)
-
-target_include_directories(profiler_agent PRIVATE $ENV{JAVA_HOME}/include $ENV{JAVA_HOME}/include/win32)
+add_jvmti_agent(profiler_agent profiler_agent.c)

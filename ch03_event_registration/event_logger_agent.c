@@ -33,7 +33,7 @@ JNIEXPORT jint JNICALL Agent_OnLoad(JavaVM *vm, char *options, void *reserved) {
     // Request capabilities
     jvmtiCapabilities caps;
     memset(&caps, 0, sizeof(caps));
-    caps.can_generate_thread_events = 1;
+    /* ThreadStart/ThreadEnd events do not require a special capability */
     jvmtiError err = (*jvmti)->AddCapabilities(jvmti, &caps);
     if (err != JVMTI_ERROR_NONE) {
         printf("[JVMTI] Failed to add capabilities: %d\n", err);
