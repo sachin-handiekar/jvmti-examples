@@ -23,16 +23,18 @@ jobs:
       matrix:
         project:
           - ch01_capability_checker
+          - ch02_basic_agent
           - ch03_event_registration
           - ch04_thread_class_inspection
-          - ch05_profiler_agent
-          - ch06_gc_exception_agent
-          - ch07_jni_callback_agent
-          - ch08_thread_control_agent
-          - ch09_heap_stack_agent
-          - ch10_class_transform_agent
-          - ch11_memory_cleanup_agent
-          - ch12_prod_agent
+          - ch05_heap_stack_agent
+          - ch06_class_transform_agent
+          - ch07_jvm_runtime_agent
+          - ch08_exception_agent
+          - ch09_advanced_techniques
+          - ch10_profiler_agent
+          - ch11_deployment_agent
+          - ch12_debugging_agent
+          - ch13_allocation_tracker
 
     runs-on: ubuntu-latest
     name: ${{ matrix.project }}

@@ -1,75 +1,89 @@
-# Learning JVMTI – Code Examples
+# Learning JVMTI -- Code Examples
 
-Note : Work in progress 
+This repository contains code examples for the book **[Learning JVMTI](https://www.leanpub.com/learning-jvmti/)**.
 
-This repository contains code examples for the book **[Learning JVMTI](https://www.leanpub.com/learning-jvmti/)**. 
-
-Each chapter directory demonstrates a key concept or feature of the Java Virtual Machine Tool Interface (JVMTI) via a hands-on native agent, with complete build and usage instructions. These examples are designed to teach you how to write, build, and run JVMTI agents in C/C++, and how to use them for profiling, debugging, monitoring, and production use.
+Each chapter directory contains a self-contained JVMTI agent with a companion Java test application, CMake build file, and chapter-specific README.
 
 ## Repository Structure
 
-Each chapter (`chXX_*`) contains a self-contained JVMTI agent example:
+| Chapter | Directory                         | Focus                                                      |
+|---------|------------------------------------|------------------------------------------------------------|
+| 1       | ch01_capability_checker            | List all potential JVMTI capabilities of the JVM           |
+| 2       | ch02_basic_agent                   | Agent lifecycle, options parsing, event registration       |
+| 3       | ch03_event_registration            | Dynamic capability requests, event callbacks, logging      |
+| 4       | ch04_thread_class_inspection       | List loaded classes and threads using JVMTI APIs           |
+| 5       | ch05_heap_stack_agent              | Heap walking, reachable objects, thread stack analysis      |
+| 6       | ch06_class_transform_agent         | Class transformation and bytecode instrumentation          |
+| 7       | ch07_jvm_runtime_agent             | GC events, system properties, object sizing                |
+| 8       | ch08_exception_agent               | Exception/ExceptionCatch callbacks, stack traces           |
+| 9       | ch09_advanced_techniques           | Raw monitors, TLS, reentrancy guards, thread-safe logging  |
+| 10      | ch10_profiler_agent                | Method entry/exit logging, invocation counting             |
+| 11      | ch11_deployment_agent              | Production-ready agent: config, logging, error handling    |
+| 12      | ch12_debugging_agent               | Heap/stack debugging, class histograms                     |
+| 13      | ch13_allocation_tracker            | Case study: allocation tracking with JSON output           |
 
-| Chapter | Directory                         | Focus/Agent Description                                   |
-|---------|------------------------------------|----------------------------------------------------------|
-| 1       | ch01_capability_checker            | List all potential JVMTI capabilities of the JVM.         |
-| 3       | ch03_event_registration            | Dynamic capability requests, event registration, logging. |
-| 4       | ch04_thread_class_inspection       | List loaded classes and threads using JVMTI APIs.         |
-| 5       | ch05_profiler_agent                | Method entry/exit logging, basic profiling.               |
-| 6       | ch06_gc_exception_agent            | Exception capture, GC event monitoring.                   |
-| 7       | ch07_jni_callback_agent            | JNI callback demonstration.                               |
-| 8       | ch08_thread_control_agent          | Thread suspension/resume, thread state inspection.        |
-| 9       | ch09_heap_stack_agent              | Heap walking, class histograms, stack trace capture.      |
-| 10      | ch10_class_transform_agent         | Class transformation and instrumentation.                 |
-| 11      | ch11_memory_cleanup_agent          | Memory allocation/deallocation, resource cleanup.         |
-| 12      | ch12_prod_agent                    | Production-ready agent: config, logging, error handling.  |
+### Shared Infrastructure
 
-## General Build Instructions
+| Directory | Purpose                                                          |
+|-----------|------------------------------------------------------------------|
+| common/   | `jvmti_utils.h` -- shared macros (`CHECK_JVMTI_ERROR`), logging |
+| cmake/    | `JvmtiCommon.cmake` -- CMake module for JNI/JVMTI setup         |
 
-All examples use CMake for cross-platform builds. You need:
-- A C/C++ compiler (e.g., GCC, Clang, MSVC)
-- CMake (version 3.10+ recommended)
-- A JDK with JVMTI headers (set `JAVA_HOME`)
+## Build Instructions
 
-For each chapter/example:
+All examples use CMake for cross-platform builds. Prerequisites:
+
+- A C/C++ compiler (GCC, Clang, or MSVC)
+- CMake 3.10+
+- A JDK with JVMTI headers (`JAVA_HOME` must be set)
+
+For each chapter:
 
 ```sh
-mkdir build
-cd build
+cd chXX_example_name
+mkdir build && cd build
 cmake ..
 cmake --build .
 ```
 
 ## Running the Agents
 
-Each agent is loaded into a Java application using the `-agentpath` JVM argument. Example:
+Each agent is loaded using the `-agentpath` JVM argument:
 
 ```sh
-java -agentpath:/full/path/to/lib<agent_name>.so -jar YourApp.jar
+# Compile the companion Java app
+javac TestApp.java
+
+# Run with the agent
+java -agentpath:./build/libagent_name.so TestApp
 ```
-- On Windows, use `.dll` instead of `.so`.
-- On macOS, use `.dylib`.
-- Always provide the absolute path to the built agent library.
 
-See the `README.md` in each chapter for specific run instructions and sample outputs.
+- On **Windows**, use `.dll` instead of `.so`
+- On **macOS**, use `.dylib` instead of `.so`
+- Always provide the **absolute path** to the built agent library
 
-## Example Agent Capabilities
+See the `README.md` in each chapter directory for specific instructions.
 
-- **Capability Checker:** Prints all JVMTI capabilities supported by the JVM.
-- **Event Registration:** Dynamically requests capabilities, registers for events, logs VM/thread lifecycle.
-- **Thread/Class Inspection:** Lists all loaded classes and active threads on VMInit.
-- **Profiler Agent:** Logs method entry/exit, counts invocations, basic profiling.
-- **GC/Exception Agent:** Captures uncaught exceptions, monitors GC events, logs durations.
-- **JNI Callback Agent:** Demonstrates calling back into Java from native code.
-- **Thread Control Agent:** Suspends/resumes threads, inspects thread state.
-- **Heap/Stack Agent:** Walks the heap, counts class instances, captures stack traces.
-- **Class Transform Agent:** Shows class transformation and instrumentation.
-- **Memory Cleanup Agent:** Demonstrates memory allocation, deallocation, and leak recovery.
-- **Production Agent:** Configurable, production-style agent with logging, log rotation, and error handling.
+## Agent Capabilities Summary
+
+- **Capability Checker** -- enumerates all JVMTI capabilities supported by the JVM
+- **Basic Agent** -- demonstrates the complete agent lifecycle (`Agent_OnLoad`/`Agent_OnUnload`)
+- **Event Registration** -- dynamically requests capabilities and registers for VM/thread events
+- **Thread/Class Inspection** -- lists all loaded classes and active threads at VMInit
+- **Heap/Stack Analysis** -- walks reachable objects, dumps thread stacks, measures object sizes
+- **Class Transformation** -- demonstrates bytecode instrumentation via ClassFileLoadHook
+- **JVM Runtime** -- monitors GC events with timing, reads system properties
+- **Exception Handling** -- captures exceptions with throw/catch locations and stack traces
+- **Advanced Techniques** -- raw monitors, Thread-Local Storage, reentrancy guards
+- **Profiler** -- logs method entry/exit, counts invocations
+- **Deployment** -- configurable production agent with logging and error handling
+- **Debugging** -- heap walking with class histograms, stack analysis
+- **Allocation Tracker** -- full case study with per-class tracking and JSON output
 
 ## References
+
 - [Official JVMTI Documentation](https://docs.oracle.com/javase/8/docs/platform/jvmti/jvmti.html)
-- 
 
 ## License
-These examples are for educational purposes and are provided under the MIT License. See [LICENSE](LICENSE) for details.
+
+These examples are provided under the MIT License. See [LICENSE](LICENSE) for details.

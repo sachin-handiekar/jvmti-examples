@@ -3,8 +3,8 @@
  *
  * Provides:
  *   - jvmti_get_env()   : Acquire a jvmtiEnv* from a JavaVM*
- *   - JVMTI_CHECK()     : Error-checking macro that returns JNI_ERR on failure
- *   - JVMTI_CHECK_VOID(): Error-checking macro for void functions
+ *   - CHECK_JVMTI_ERROR()     : Error-checking macro that returns JNI_ERR on failure
+ *   - CHECK_JVMTI_ERROR_VOID(): Error-checking macro for void functions
  *   - jvmti_log()       : Simple append-to-file logger
  *
  * Each chapter can optionally #include this header to reduce boilerplate.
@@ -45,9 +45,9 @@ static inline jvmtiEnv* jvmti_get_env(JavaVM *vm) {
  * Use inside Agent_OnLoad or any function returning jint.
  *
  * Example:
- *   JVMTI_CHECK((*jvmti)->AddCapabilities(jvmti, &caps), "Failed to add capabilities");
+ *   CHECK_JVMTI_ERROR((*jvmti)->AddCapabilities(jvmti, &caps), "Failed to add capabilities");
  */
-#define JVMTI_CHECK(expr, msg)                                          \
+#define CHECK_JVMTI_ERROR(expr, msg)                                     \
     do {                                                                 \
         jvmtiError _err = (expr);                                        \
         if (_err != JVMTI_ERROR_NONE) {                                  \
@@ -60,7 +60,7 @@ static inline jvmtiEnv* jvmti_get_env(JavaVM *vm) {
  * Execute a JVMTI call and return (void) if it fails.
  * Use inside callback functions that return void.
  */
-#define JVMTI_CHECK_VOID(expr, msg)                                     \
+#define CHECK_JVMTI_ERROR_VOID(expr, msg)                                \
     do {                                                                 \
         jvmtiError _err = (expr);                                        \
         if (_err != JVMTI_ERROR_NONE) {                                  \

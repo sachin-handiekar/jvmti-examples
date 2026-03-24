@@ -153,18 +153,18 @@ JNIEXPORT jint JNICALL Agent_OnLoad(JavaVM *vm, char *options, void *reserved) {
     memset(&caps, 0, sizeof(caps));
     caps.can_tag_objects = 1;
     caps.can_generate_object_free_events = 1;
-    JVMTI_CHECK((*jvmti)->AddCapabilities(jvmti, &caps),
+    CHECK_JVMTI_ERROR((*jvmti)->AddCapabilities(jvmti, &caps),
                 "Failed to add capabilities");
 
     /* Register VMInit callback */
     jvmtiEventCallbacks callbacks;
     memset(&callbacks, 0, sizeof(callbacks));
     callbacks.VMInit = &cbVMInit;
-    JVMTI_CHECK((*jvmti)->SetEventCallbacks(jvmti, &callbacks, sizeof(callbacks)),
+    CHECK_JVMTI_ERROR((*jvmti)->SetEventCallbacks(jvmti, &callbacks, sizeof(callbacks)),
                 "Failed to set event callbacks");
 
     /* Enable VMInit event */
-    JVMTI_CHECK((*jvmti)->SetEventNotificationMode(
+    CHECK_JVMTI_ERROR((*jvmti)->SetEventNotificationMode(
                     jvmti, JVMTI_ENABLE, JVMTI_EVENT_VM_INIT, NULL),
                 "Failed to enable VMInit event");
 
