@@ -2,9 +2,15 @@
 
 Demonstrates JVM runtime inspection and GC monitoring:
 
-- **GC events**: `GarbageCollectionStart` / `GarbageCollectionFinish` with timing
+- **GC events**: `GarbageCollectionStart` / `GarbageCollectionFinish` timed with
+  `GetTime` (nanosecond wall-clock). GC callbacks run in a restricted environment —
+  no JNI, no file I/O — so they do bookkeeping only; the summary is printed at `VMDeath`
 - **System properties**: Reading `java.vm.name`, `java.vm.version`, etc.
+- **Runtime queries**: `GetAvailableProcessors`, `GetPhase`
 - **Object sizing**: Using `GetObjectSize` to measure object memory footprint
+
+> Run with a small heap (e.g., `java -Xmx16m ...`) to force collections and see
+> GC statistics in the summary.
 
 ## Build
 

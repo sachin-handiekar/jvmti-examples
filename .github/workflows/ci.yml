@@ -33,7 +33,7 @@ jobs:
           - ch09_advanced_techniques
           - ch10_profiler_agent
           - ch11_deployment_agent
-          - ch12_debugging_agent
+          - ch12_stability_agent
           - ch13_allocation_tracker
 
     runs-on: ubuntu-latest

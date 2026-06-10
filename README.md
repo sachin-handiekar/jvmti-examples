@@ -8,19 +8,19 @@ Each chapter directory contains a self-contained JVMTI agent with a companion Ja
 
 | Chapter | Directory                         | Focus                                                      |
 |---------|------------------------------------|------------------------------------------------------------|
-| 1       | ch01_capability_checker            | List all potential JVMTI capabilities of the JVM           |
+| 1       | ch01_capability_checker            | List potential JVMTI capabilities of the JVM               |
 | 2       | ch02_basic_agent                   | Agent lifecycle, options parsing, event registration       |
-| 3       | ch03_event_registration            | Dynamic capability requests, event callbacks, logging      |
-| 4       | ch04_thread_class_inspection       | List loaded classes and threads using JVMTI APIs           |
-| 5       | ch05_heap_stack_agent              | Heap walking, reachable objects, thread stack analysis      |
+| 3       | ch03_event_registration            | Capabilities, event callbacks, method/thread tracking      |
+| 4       | ch04_thread_class_inspection       | Thread dump: states, stack walking, line numbers           |
+| 5       | ch05_heap_stack_agent              | Heap walking with IterateThroughHeap, stack analysis       |
 | 6       | ch06_class_transform_agent         | Class transformation and bytecode instrumentation          |
-| 7       | ch07_jvm_runtime_agent             | GC events, system properties, object sizing                |
-| 8       | ch08_exception_agent               | Exception/ExceptionCatch callbacks, stack traces           |
+| 7       | ch07_jvm_runtime_agent             | GC events with GetTime, system properties, object sizing   |
+| 8       | ch08_exception_agent               | Exception/ExceptionCatch callbacks, filtering, stack traces |
 | 9       | ch09_advanced_techniques           | Raw monitors, TLS, reentrancy guards, thread-safe logging  |
-| 10      | ch10_profiler_agent                | Method entry/exit logging, invocation counting             |
-| 11      | ch11_deployment_agent              | Production-ready agent: config, logging, error handling    |
-| 12      | ch12_debugging_agent               | Heap/stack debugging, class histograms                     |
-| 13      | ch13_allocation_tracker            | Case study: allocation tracking with JSON output           |
+| 10      | ch10_profiler_agent                | Minimal sampling profiler with flamegraph output           |
+| 11      | ch11_deployment_agent              | Production agent: OnLoad + OnAttach, config, log rotation  |
+| 12      | ch12_stability_agent               | Security & stability: capability degradation, safe shutdown, signal chaining |
+| 13      | ch13_allocation_tracker            | Case study: allocation sampling (SampledObjectAlloc) with JSON output |
 
 ### Shared Infrastructure
 
@@ -58,31 +58,32 @@ javac TestApp.java
 java -agentpath:./build/libagent_name.so TestApp
 ```
 
-- On **Windows**, use `.dll` instead of `.so`
-- On **macOS**, use `.dylib` instead of `.so`
+- On **Linux** the built library is `libagent_name.so`
+- On **macOS** it is `libagent_name.dylib`
+- On **Windows** it is `agent_name.dll` (no `lib` prefix)
 - Always provide the **absolute path** to the built agent library
 
 See the `README.md` in each chapter directory for specific instructions.
 
 ## Agent Capabilities Summary
 
-- **Capability Checker** -- enumerates all JVMTI capabilities supported by the JVM
-- **Basic Agent** -- demonstrates the complete agent lifecycle (`Agent_OnLoad`/`Agent_OnUnload`)
-- **Event Registration** -- dynamically requests capabilities and registers for VM/thread events
-- **Thread/Class Inspection** -- lists all loaded classes and active threads at VMInit
-- **Heap/Stack Analysis** -- walks reachable objects, dumps thread stacks, measures object sizes
-- **Class Transformation** -- demonstrates bytecode instrumentation via ClassFileLoadHook
-- **JVM Runtime** -- monitors GC events with timing, reads system properties
-- **Exception Handling** -- captures exceptions with throw/catch locations and stack traces
+- **Capability Checker** -- prints a representative set of the JVM's potential capabilities
+- **Basic Agent** -- demonstrates the complete agent lifecycle (`Agent_OnLoad`/`Agent_OnUnload`) and `key=value` option parsing
+- **Event Registration** -- the three-step event model: capabilities, callbacks, notification modes
+- **Thread/Class Inspection** -- Java-style thread dump with states, stack frames, and source lines
+- **Heap/Stack Analysis** -- walks the heap with the modern `IterateThroughHeap` API, dumps thread stacks
+- **Class Transformation** -- demonstrates bytecode interception via ClassFileLoadHook
+- **JVM Runtime** -- times GC events with `GetTime`, reads system properties
+- **Exception Handling** -- captures exceptions with throw/catch locations, JDK filtering, and safe JNI use
 - **Advanced Techniques** -- raw monitors, Thread-Local Storage, reentrancy guards
-- **Profiler** -- logs method entry/exit, counts invocations
-- **Deployment** -- configurable production agent with logging and error handling
-- **Debugging** -- heap walking with class histograms, stack analysis
-- **Allocation Tracker** -- full case study with per-class tracking and JSON output
+- **Profiler** -- sampling profiler: dedicated agent thread, `GetStackTrace`, collapsed-stack/flamegraph output
+- **Deployment** -- configurable production agent with `Agent_OnAttach`, rotation-safe logging
+- **Stability** -- capability degradation, safe shutdown, chained crash handlers
+- **Allocation Tracker** -- full case study sampling all allocation paths via `SampledObjectAlloc` (JDK 11+)
 
 ## References
 
-- [Official JVMTI Documentation](https://docs.oracle.com/javase/8/docs/platform/jvmti/jvmti.html)
+- [Official JVMTI Documentation](https://docs.oracle.com/en/java/javase/21/docs/specs/jvmti.html)
 
 ## License
 

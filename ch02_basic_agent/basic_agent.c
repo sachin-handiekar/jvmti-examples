@@ -13,7 +13,7 @@
  *
  * Run:
  *   javac HelloApp.java
- *   java -agentpath:./build/libbasic_agent.so=verbose HelloApp
+ *   java -agentpath:./build/libbasic_agent.so=verbose=true HelloApp
  */
 
 #include "jvmti_utils.h"
@@ -28,6 +28,8 @@ static int verbose_mode = 0;
 /*  Option Parsing                                                     */
 /* ------------------------------------------------------------------ */
 
+/* Parse comma-separated key=value pairs (book §2.5), e.g.
+   -agentpath:libbasic_agent.so=verbose=true,output=/tmp/trace.log */
 static void parse_options(const char* options) {
     if (!options || strlen(options) == 0) return;
 
@@ -36,9 +38,16 @@ static void parse_options(const char* options) {
 
     char* token = strtok(opts, ",");
     while (token) {
-        if (strcmp(token, "verbose") == 0) {
-            verbose_mode = 1;
-            printf("[Agent] Verbose mode enabled\n");
+        char* eq = strchr(token, '=');
+        if (eq != NULL) {
+            *eq = '\0';
+            const char* key = token;
+            const char* value = eq + 1;
+            printf("[Agent] Option: %s = %s\n", key, value);
+            if (strcmp(key, "verbose") == 0 && strcmp(value, "true") == 0) {
+                verbose_mode = 1;
+                printf("[Agent] Verbose mode enabled\n");
+            }
         }
         token = strtok(NULL, ",");
     }
@@ -71,7 +80,7 @@ static void JNICALL cbVMInit(jvmtiEnv *jvmti, JNIEnv *jni, jthread thread) {
         if (err == JVMTI_ERROR_NONE) {
             char buf[256];
             snprintf(buf, sizeof(buf),
-                     "[Agent] Loaded classes at VMInit: %d", class_count);
+                     "[Agent] Loaded classes at VMInit: %d", (int)class_count);
             jvmti_log(LOG_FILE, buf);
             (*jvmti)->Deallocate(jvmti, (unsigned char*)classes);
         }
@@ -101,19 +110,18 @@ JNIEXPORT jint JNICALL Agent_OnLoad(JavaVM *vm, char *options, void *reserved) {
     memset(&callbacks, 0, sizeof(callbacks));
     callbacks.VMInit  = &cbVMInit;
     callbacks.VMDeath = &cbVMDeath;
-    CHECK_JVMTI_ERROR(
-        (*jvmti)->SetEventCallbacks(jvmti, &callbacks, sizeof(callbacks)),
-        "Failed to set event callbacks");
+    jvmtiError err = (*jvmti)->SetEventCallbacks(jvmti, &callbacks,
+                                                  sizeof(callbacks));
+    CHECK_JVMTI_ERROR(jvmti, err, "SetEventCallbacks");
+    if (err != JVMTI_ERROR_NONE) return JNI_ERR;
 
     /* Enable events */
-    CHECK_JVMTI_ERROR(
-        (*jvmti)->SetEventNotificationMode(jvmti, JVMTI_ENABLE,
-                                           JVMTI_EVENT_VM_INIT, NULL),
-        "Failed to enable VMInit event");
-    CHECK_JVMTI_ERROR(
-        (*jvmti)->SetEventNotificationMode(jvmti, JVMTI_ENABLE,
-                                           JVMTI_EVENT_VM_DEATH, NULL),
-        "Failed to enable VMDeath event");
+    err = (*jvmti)->SetEventNotificationMode(jvmti, JVMTI_ENABLE,
+                                             JVMTI_EVENT_VM_INIT, NULL);
+    CHECK_JVMTI_ERROR(jvmti, err, "Enable VMInit");
+    err = (*jvmti)->SetEventNotificationMode(jvmti, JVMTI_ENABLE,
+                                             JVMTI_EVENT_VM_DEATH, NULL);
+    CHECK_JVMTI_ERROR(jvmti, err, "Enable VMDeath");
 
     jvmti_log(LOG_FILE, "[Agent] Agent_OnLoad complete — waiting for events.");
     return JNI_OK;

@@ -4,7 +4,7 @@ This example demonstrates the fundamental building blocks of a JVMTI agent:
 
 - **Agent lifecycle**: `Agent_OnLoad` and `Agent_OnUnload` entry points
 - **Environment acquisition**: Getting a `jvmtiEnv*` from `JavaVM*`
-- **Options parsing**: Reading comma-separated agent options
+- **Options parsing**: Reading comma-separated `key=value` agent options (book §2.5)
 - **Error handling**: Using the `CHECK_JVMTI_ERROR` macro
 - **Event registration**: VMInit and VMDeath callbacks
 
@@ -20,7 +20,7 @@ cmake --build .
 
 ```sh
 javac HelloApp.java
-java -agentpath:./build/libbasic_agent.so=verbose HelloApp
+java -agentpath:./build/libbasic_agent.so=verbose=true HelloApp
 ```
 
 On Windows use `.dll`, on macOS use `.dylib`.
@@ -29,6 +29,7 @@ On Windows use `.dll`, on macOS use `.dylib`.
 
 ```
 [Agent] basic_agent loaded (Chapter 02)
+[Agent] Option: verbose = true
 [Agent] Verbose mode enabled
 HelloApp: Starting...
 HelloApp: Step 1

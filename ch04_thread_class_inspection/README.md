@@ -1,29 +1,38 @@
-# Chapter 4: Thread and Class Inspection
+# Chapter 4 — Inspecting Threads, Stacks, and Methods
 
-This example demonstrates a JVMTI agent that:
-- On VMInit, prints all loaded classes and all active threads
-- Uses GetClassSignature to print class signatures
-- Uses GetThreadInfo to print thread names
-- Logs output to `thread_class_inspection.log`
+A thread-dump agent (book §4.5) that, at `VMInit`:
+
+- Enumerates all live threads with `GetAllThreads` / `GetThreadInfo`
+- Reports each thread's state via `GetThreadState` — testing the **specific** flag
+  (`SLEEPING`) before the general one (`WAITING`), since sleeping is a sub-state of waiting
+- Walks each stack with `GetStackTrace` and resolves frames with `GetMethodName`,
+  `GetMethodDeclaringClass`, and `GetClassSignature`
+- Maps bytecode indices to source lines with `GetLineNumberTable`
+  (capability: `can_get_line_numbers`)
+- Logs the loaded-class count as a bonus
+
+Output goes to `thread_class_inspection.log`.
 
 ## Building
 
-1. Make sure you have a valid JAVA_HOME environment variable pointing to your JDK.
-2. Run the following commands:
-
 ```sh
-mkdir build
-cd build
+mkdir build && cd build
 cmake ..
 cmake --build .
 ```
 
 ## Usage
 
-Run your Java application with the agent:
-
 ```sh
-java -agentpath:/path/to/thread_class_inspection_agent.dll -jar YourApp.jar
+javac -g InspectionTestApp.java     # -g enables line-number tables
+java -agentpath:./build/libthread_class_inspection_agent.so InspectionTestApp
 ```
 
-Check `thread_class_inspection.log` for the output.
+(On Windows use `build\thread_class_inspection_agent.dll`, on macOS the `.dylib`.)
+
+## Notes
+
+- The `main` thread's stack appears empty in the dump: the `VM_INIT` callback runs *on*
+  the main thread, which is executing native agent code at that moment
+- Line numbers require classes compiled with `javac -g`; JDK classes show them because
+  the JDK ships debug info

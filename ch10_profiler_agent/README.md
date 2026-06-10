@@ -1,28 +1,49 @@
-# Chapter 5: Method Entry, Exit, and Instrumentation
+# Chapter 10 — Building a Minimal Profiler
 
-This example demonstrates a JVMTI profiler agent that:
-- Logs method entry and exit events for methods in the `com.example` package
-- Uses JVMTI MethodEntry and MethodExit events
-- Optionally counts invocations per method and logs the result on VM shutdown
+A minimal **sampling CPU profiler**: a dedicated agent thread periodically snapshots
+every Java thread's stack and aggregates identical stacks into collapsed-stack format,
+ready for flamegraph visualization. This is the same technique used by async-profiler,
+JProfiler, and YourKit.
+
+> **Why sampling, not instrumentation?** Method entry/exit hooks fire for *every* call —
+> millions per second — and distort the very timings they measure. Sampling captures
+> stacks at fixed intervals (10ms here) for a statistical picture with low overhead.
+> See the book's Chapter 10, §10.1.
+
+## How It Works
+
+1. `VMInit` creates a `java.lang.Thread` via JNI and starts it with `RunAgentThread`
+2. The sampling loop calls `GetAllThreads` + `GetStackTrace` every 10ms
+3. Stacks are collapsed bottom-up into `frame;frame;frame` keys and counted
+4. `VMDeath` writes `profiler_output.txt` in flamegraph "collapsed" format
 
 ## Building
 
-1. Make sure you have a valid JAVA_HOME environment variable pointing to your JDK.
-2. Run the following commands:
-
 ```sh
-mkdir build
-cd build
+mkdir build && cd build
 cmake ..
 cmake --build .
 ```
 
 ## Usage
 
-Run your Java application with the agent:
-
 ```sh
-java -agentpath:/path/to/profiler_agent.dll -jar YourApp.jar
+javac ProfilerTestApp.java
+java -agentpath:./build/libprofiler_agent.so ProfilerTestApp
 ```
 
-Check `profiler_agent.log` for method entry/exit logs and invocation counts.
+(On Windows use `build\profiler_agent.dll`, on macOS `build/libprofiler_agent.dylib`.)
+
+## Generating a Flamegraph
+
+```sh
+git clone https://github.com/brendangregg/FlameGraph.git
+cat profiler_output.txt | ./FlameGraph/flamegraph.pl > profile.svg
+```
+
+## Notes
+
+- `GetStackTrace` is safe and portable but **safepoint-biased** — production profilers
+  like async-profiler use the non-standard `AsyncGetCallTrace` HotSpot API to avoid this
+- Never call `GetStackTrace` from a signal handler; the dedicated-thread approach used
+  here works on every platform

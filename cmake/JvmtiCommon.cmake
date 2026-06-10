@@ -26,15 +26,18 @@ function(add_jvmti_agent TARGET_NAME)
         ${CMAKE_CURRENT_SOURCE_DIR}/../common
     )
 
+    # Keep the platform's conventional naming (book Chapter 2, §2.7):
+    # libagent.so (Linux), libagent.dylib (macOS), agent.dll (Windows)
     set_target_properties(${TARGET_NAME} PROPERTIES
-        PREFIX ""
         OUTPUT_NAME "${TARGET_NAME}"
     )
 
-    # Enable warnings for better code quality
+    # Enable warnings for better code quality. JVMTI callback signatures
+    # are fixed by the spec, so unused-parameter warnings are suppressed.
     if(MSVC)
-        target_compile_options(${TARGET_NAME} PRIVATE /W4)
+        target_compile_options(${TARGET_NAME} PRIVATE /W4 /wd4100)
     else()
-        target_compile_options(${TARGET_NAME} PRIVATE -Wall -Wextra -Wpedantic)
+        target_compile_options(${TARGET_NAME} PRIVATE
+            -Wall -Wextra -Wpedantic -Wno-unused-parameter)
     endif()
 endfunction()

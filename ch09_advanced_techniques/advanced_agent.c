@@ -141,6 +141,12 @@ static void JNICALL cbThreadEnd(jvmtiEnv* jvmti, JNIEnv* jni,
 
 static void JNICALL cbVMDeath(jvmtiEnv* jvmti, JNIEnv* jni) {
     jvmti_log(LOG_FILE, "[Agent] VMDeath — agent shutting down.");
+
+    /* Destroy the raw monitor last (book §9.7 best practices) */
+    if (agent_lock) {
+        (*jvmti)->DestroyRawMonitor(jvmti, agent_lock);
+        agent_lock = NULL;
+    }
 }
 
 /* ------------------------------------------------------------------ */
@@ -153,18 +159,20 @@ JNIEXPORT jint JNICALL Agent_OnLoad(JavaVM *vm, char *options, void *reserved) {
     jvmtiEnv* jvmti = jvmti_get_env(vm);
     if (!jvmti) return JNI_ERR;
 
+    jvmtiError err;
+
     /* Create raw monitor for thread-safe logging */
-    CHECK_JVMTI_ERROR(
-        (*jvmti)->CreateRawMonitor(jvmti, "agent_lock", &agent_lock),
-        "Failed to create raw monitor");
+    err = (*jvmti)->CreateRawMonitor(jvmti, "agent_lock", &agent_lock);
+    CHECK_JVMTI_ERROR(jvmti, err, "CreateRawMonitor");
+    if (err != JVMTI_ERROR_NONE) return JNI_ERR;
 
     /* Request capabilities */
     jvmtiCapabilities caps;
     memset(&caps, 0, sizeof(caps));
     caps.can_generate_method_entry_events = 1;
-    CHECK_JVMTI_ERROR(
-        (*jvmti)->AddCapabilities(jvmti, &caps),
-        "Failed to add capabilities");
+    err = (*jvmti)->AddCapabilities(jvmti, &caps);
+    CHECK_JVMTI_ERROR(jvmti, err, "AddCapabilities");
+    if (err != JVMTI_ERROR_NONE) return JNI_ERR;
 
     /* Register callbacks */
     jvmtiEventCallbacks callbacks;
@@ -173,27 +181,23 @@ JNIEXPORT jint JNICALL Agent_OnLoad(JavaVM *vm, char *options, void *reserved) {
     callbacks.ThreadStart  = &cbThreadStart;
     callbacks.ThreadEnd    = &cbThreadEnd;
     callbacks.VMDeath      = &cbVMDeath;
-    CHECK_JVMTI_ERROR(
-        (*jvmti)->SetEventCallbacks(jvmti, &callbacks, sizeof(callbacks)),
-        "Failed to set event callbacks");
+    err = (*jvmti)->SetEventCallbacks(jvmti, &callbacks, sizeof(callbacks));
+    CHECK_JVMTI_ERROR(jvmti, err, "SetEventCallbacks");
+    if (err != JVMTI_ERROR_NONE) return JNI_ERR;
 
     /* Enable events */
-    CHECK_JVMTI_ERROR(
-        (*jvmti)->SetEventNotificationMode(jvmti, JVMTI_ENABLE,
-                                           JVMTI_EVENT_METHOD_ENTRY, NULL),
-        "Failed to enable MethodEntry event");
-    CHECK_JVMTI_ERROR(
-        (*jvmti)->SetEventNotificationMode(jvmti, JVMTI_ENABLE,
-                                           JVMTI_EVENT_THREAD_START, NULL),
-        "Failed to enable ThreadStart event");
-    CHECK_JVMTI_ERROR(
-        (*jvmti)->SetEventNotificationMode(jvmti, JVMTI_ENABLE,
-                                           JVMTI_EVENT_THREAD_END, NULL),
-        "Failed to enable ThreadEnd event");
-    CHECK_JVMTI_ERROR(
-        (*jvmti)->SetEventNotificationMode(jvmti, JVMTI_ENABLE,
-                                           JVMTI_EVENT_VM_DEATH, NULL),
-        "Failed to enable VMDeath event");
+    err = (*jvmti)->SetEventNotificationMode(jvmti, JVMTI_ENABLE,
+              JVMTI_EVENT_METHOD_ENTRY, NULL);
+    CHECK_JVMTI_ERROR(jvmti, err, "Enable MethodEntry");
+    err = (*jvmti)->SetEventNotificationMode(jvmti, JVMTI_ENABLE,
+              JVMTI_EVENT_THREAD_START, NULL);
+    CHECK_JVMTI_ERROR(jvmti, err, "Enable ThreadStart");
+    err = (*jvmti)->SetEventNotificationMode(jvmti, JVMTI_ENABLE,
+              JVMTI_EVENT_THREAD_END, NULL);
+    CHECK_JVMTI_ERROR(jvmti, err, "Enable ThreadEnd");
+    err = (*jvmti)->SetEventNotificationMode(jvmti, JVMTI_ENABLE,
+              JVMTI_EVENT_VM_DEATH, NULL);
+    CHECK_JVMTI_ERROR(jvmti, err, "Enable VMDeath");
 
     jvmti_log(LOG_FILE, "[Agent] Agent_OnLoad complete — advanced features active.");
     return JNI_OK;
